@@ -28,6 +28,11 @@ class StartScreen {
 
     //starting frame initialization
     public void start() {
+        //open the guide window
+        //this is to make sure the user knows how to use the program
+        //User can also click the guide button if they want to see it again
+        GuideWindow guide = new GuideWindow();
+
         startframe = new JFrame("Start Menu");
         startframe.setLayout(new GridLayout(4,2));
         startframe.setBounds(100, 100, 300, 200);
@@ -355,6 +360,7 @@ class GuideWindow {
 
     public GuideWindow() {
         guideframe = new JFrame("Guide");
+        guideframe.setAlwaysOnTop(true);
         guideframe.setLayout(new BorderLayout());
         guideframe.setSize(500,500);
         guideframe.setResizable(true);
@@ -364,7 +370,51 @@ class GuideWindow {
             }
         });
 
-        //TODO: Add function here, and add the button inside MainWindow
+        // Header label
+        JLabel headerLabel = new JLabel("Program Guideline", SwingConstants.CENTER);
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        headerLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        guideframe.add(headerLabel, BorderLayout.NORTH);
+
+        // Content area for the guide
+        JTextArea guideText = new JTextArea();
+        guideText.setText("""
+            T12L CPU Scheduling Program Manual
+            
+            1. Main Menu
+            - Set the number of processes that you want to calculate [3 - 10]
+            - Set the calculation method 
+            - Set whether the calculation make use of priority value or not
+            
+            2. Main Window
+            - Input the numbers in this order :
+            LEFT TO RIGHT, TOP TO BOTTOM
+            that means starting from the top left process column and moving to the right,
+            going down a row when you reach priority column or the end if there is no priority
+            
+            3. Result Window
+            - Click the Result Button to make this window appear
+            - it will take the inputs and calculate it, showing the results in the form of a gantt chart
+            ----------------------------------------
+            T (0) |
+            ----------------------------------------
+            P     |
+            ----------------------------------------
+            - It will also display the final table containing the Process | Arrival Time | Burst Time | Finish Time | TurnAround Time | Waiting Time
+            
+            4. Buttons inside the program
+            - Guide Button -> this will show the guide window, you can use this if you need to see the guide
+            - Reset Button -> this will empty all the field and you can enter a new value 
+            """);
+
+        guideText.setFont(new Font("Arial", Font.PLAIN, 14));
+        guideText.setEditable(false); // Make it read-only
+        guideText.setLineWrap(true); // Wrap long lines
+        guideText.setWrapStyleWord(true);
+
+        // Add the text area to a scroll pane
+        JScrollPane scrollPane = new JScrollPane(guideText);
+        guideframe.add(scrollPane, BorderLayout.CENTER);
 
         guideframe.setVisible(true);
     }
@@ -394,8 +444,10 @@ class ResultWindow {
 }
 
 //Calculation classes
-//TODO: Implement calculation class using inheritance, abstract calculate class and inherits by other calc method
-//TODO: class to be overriden (Calculate)
+//TODO: Implement calculation for each scheduling here
+class Calculate {
+
+}
 
 public class test {
     public static void main(String[] args) {
