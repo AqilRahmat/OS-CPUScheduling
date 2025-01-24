@@ -4,12 +4,14 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 //Starting screen
 class StartScreen {
     private JFrame startframe;
-    private JButton startbutton;
+    private JButton startbutton, guidebutton;
     static JComboBox<String> processnum, calcchosen, priority;
 
     public static JComboBox<String> getCalcchosen() {
@@ -63,6 +65,14 @@ class StartScreen {
         priority.addItem("Have Priority");
         priority.addItem("No Priority");
 
+        //Guide button
+        guidebutton = new JButton("Guide");
+        guidebutton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                GuideWindow guide = new GuideWindow();
+            }
+        });
+
         //start button
         startbutton = new JButton("Start");
         startbutton.addActionListener(new ActionListener() {
@@ -82,7 +92,7 @@ class StartScreen {
         startframe.add(prioritylabel);
         startframe.add(priority);
 
-        startframe.add(new JLabel("")); //empty label to fill space
+        startframe.add(guidebutton);
         startframe.add(startbutton);
     }
 }
@@ -93,9 +103,6 @@ class MainWindow {
     private StartScreen startscreen;
     private JComboBox<String> processnum, calcchosen, priority;
     static ArrayList<Integer> processes, burst, arrival, priorityvalue;
-
-    //TODO: add boolean to set if user can enter burst time, arrival time, etc..
-    //TODO: user can enter from left to right and top to bottom
 
     public static ArrayList<Integer> getProcesseslist() {
         return processes;
@@ -223,6 +230,7 @@ class MainWindow {
                 }
             });
 
+            //reset button
             JButton reset = new JButton("Reset");
             reset.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -231,8 +239,16 @@ class MainWindow {
                 }
             });
 
+            //Guide button
+            JButton guidebutton = new JButton("Guide");
+            guidebutton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    GuideWindow guide = new GuideWindow();
+                }
+            });
+
             mainframe.add(new JLabel("")); //empty space
-            mainframe.add(new JLabel("")); //empty space
+            mainframe.add(guidebutton);
             mainframe.add(reset);
             mainframe.add(calculate);
         } else {
@@ -316,11 +332,41 @@ class MainWindow {
                     MainWindow mainwindow = new MainWindow();
                 }
             });
-            mainframe.add(new JLabel("")); //empty space
+
+            //Guide button
+            JButton guidebutton = new JButton("Guide");
+            guidebutton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    GuideWindow guide = new GuideWindow();
+                }
+            });
+
+            mainframe.add(guidebutton);
             mainframe.add(reset);
             mainframe.add(calculate);
         }
         mainframe.setVisible(true);
+    }
+}
+
+//Guide window to show how to use the program
+class GuideWindow {
+    private JFrame guideframe;
+
+    public GuideWindow() {
+        guideframe = new JFrame("Guide");
+        guideframe.setLayout(new BorderLayout());
+        guideframe.setSize(500,500);
+        guideframe.setResizable(true);
+        guideframe.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                guideframe.dispose();
+            }
+        });
+
+        //TODO: Add function here, and add the button inside MainWindow
+
+        guideframe.setVisible(true);
     }
 }
 
