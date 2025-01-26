@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -423,21 +424,39 @@ class GuideWindow {
 //Result window
 class ResultWindow {
     private JFrame resultframe;
+    private JTable resultTable;
+    private DefaultTableModel tableModel;
 
     public ResultWindow() {
         resultframe = new JFrame("Result");
-        resultframe.setBounds(100, 100, 500, 300);
+        resultframe.setBounds(100, 100, 800, 600);
+        resultframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         resultframe.setResizable(true);
+        resultframe.setLayout(new BorderLayout());
 
-        for(int i = 0; i < MainWindow.getProcesseslist().size(); i++) {
-            System.out.println(MainWindow.getProcesseslist().get(i));
-            System.out.println(MainWindow.getPriorityvaluelist().get(i));
-            System.out.println(MainWindow.getBurstlist().get(i));
-            System.out.println(MainWindow.getArrivallist().get(i));
+        // Create table model and table
+        String[] columnNames = {"Process", "Burst Time", "Arrival Time", "Completion Time", "Turn Around Time", "Waiting Time"};
+        tableModel = new DefaultTableModel(columnNames, 0); // 0 rows initially
+        resultTable = new JTable(tableModel);
+        resultTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); // Resize columns to fit
+        resultTable.setFillsViewportHeight(true);
+
+        JScrollPane scrollPane = new JScrollPane(resultTable);
+        resultframe.add(scrollPane, BorderLayout.CENTER);
+
+        ArrayList<Integer> processes = MainWindow.getProcesseslist();
+        ArrayList<Integer> burst = MainWindow.getBurstlist();
+        ArrayList<Integer> arrival = MainWindow.getArrivallist();
+
+        if (processes == null || burst == null || arrival == null || processes.isEmpty() || burst.isEmpty() || arrival.isEmpty() || processes.size() != burst.size() || processes.size() != arrival.size()) {
+            tableModel.addRow(new Object[]{"Error: Please enter valid input for all processes.", "", "", "", "", ""});
+        } else {
+            try {
+                Calculate.calculateSJN(processes, burst, arrival, tableModel); // Pass tableModel
+            } catch (NumberFormatException e) {
+                tableModel.addRow(new Object[]{"Error: Invalid input format. Please enter numbers only.", "", "", "", "", ""});
+            }
         }
-
-
-        //TODO: Set gantt chart to display result (row based on the number of process, just use getprocesseslist.getsize)
 
         resultframe.setVisible(true);
     }
@@ -446,6 +465,97 @@ class ResultWindow {
 //Calculation classes
 //TODO: Implement calculation for each scheduling here
 class Calculate {
+
+    public static void calculateSJN(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
+        int n = processes.size();
+        int[] process = new int[n];
+        int[] bt = new int[n];
+        int[] at = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
+        int[] rt = new int[n];
+        int[] p = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            process[i] = processes.get(i);
+            bt[i] = burst.get(i);
+            at[i] = arrival.get(i);
+            rt[i] = bt[i];
+            p[i] = i;
+        }
+
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (at[j] > at[j + 1]) {
+                    // swap arrival times
+                    int temp = at[j];
+                    at[j] = at[j + 1];
+                    at[j + 1] = temp;
+                    // swap burst times accordingly
+                    temp = bt[j];
+                    bt[j] = bt[j + 1];
+                    bt[j + 1] = temp;
+                    // swap process IDs accordingly
+                    temp = p[j];
+                    p[j] = p[j + 1];
+                    p[j + 1] = temp;
+                }
+            }
+        }
+        int current = 0;
+        int completed = 0;
+        while (completed != n) {
+            int shortest = -1;
+            for (int i = 0; i < n; i++) {
+                if (at[i] <= current && rt[i] > 0) {
+                    if (shortest == -1 || rt[i] < rt[shortest]) {
+                        shortest = i;
+                    }
+                }
+            }
+            if (shortest == -1) {
+                current++;
+            } else {
+                current += rt[shortest];
+                ct[shortest] = current;
+                rt[shortest] = 0;
+                completed++;
+            }
+        }
+
+
+        for (int i = 0; i < n; i++) {
+            tat[i] = ct[i] - at[i];
+            wt[i] = tat[i] - bt[i];
+        }
+
+        // add rows to the table model
+        for (int i = 0; i < n; i++) {
+            tableModel.addRow(new Object[]{process[p[i]], bt[p[i]], at[p[i]], ct[p[i]], tat[p[i]], wt[p[i]]});
+        }
+    }
+
+
+    //Shortest Remaining Time
+    public static void calculateSRT(){
+
+    }
+
+    //Round Robin (Q=3)
+    public static void calculateRR(){
+
+    }
+
+    //Preemptive priority
+    public static void calculatePP(){
+
+    }
+
+    //Non-preemptive priority
+    public static void calculateNPP(){
+
+    }
 
 }
 
