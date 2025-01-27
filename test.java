@@ -423,9 +423,11 @@ class GuideWindow {
 
 //Result window
 class ResultWindow {
+
     private JFrame resultframe;
     private JTable resultTable;
     private DefaultTableModel tableModel;
+    private JTextArea ganttChartArea;
 
     public ResultWindow() {
         resultframe = new JFrame("Result");
@@ -434,7 +436,7 @@ class ResultWindow {
         resultframe.setResizable(true);
         resultframe.setLayout(new BorderLayout());
 
-        // Create table model and table
+        // create table model and table
         String[] columnNames = {"Process", "Burst Time", "Arrival Time", "Completion Time", "Turn Around Time", "Waiting Time"};
         tableModel = new DefaultTableModel(columnNames, 0); // 0 rows initially
         resultTable = new JTable(tableModel);
@@ -444,6 +446,11 @@ class ResultWindow {
         JScrollPane scrollPane = new JScrollPane(resultTable);
         resultframe.add(scrollPane, BorderLayout.CENTER);
 
+        ganttChartArea = new JTextArea();
+        ganttChartArea.setEditable(false);
+        JScrollPane ganttScrollPane = new JScrollPane(ganttChartArea);
+        resultframe.add(ganttScrollPane, BorderLayout.SOUTH);
+
         ArrayList<Integer> processes = MainWindow.getProcesseslist();
         ArrayList<Integer> burst = MainWindow.getBurstlist();
         ArrayList<Integer> arrival = MainWindow.getArrivallist();
@@ -452,13 +459,45 @@ class ResultWindow {
             tableModel.addRow(new Object[]{"Error: Please enter valid input for all processes.", "", "", "", "", ""});
         } else {
             try {
-                Calculate.calculateSJN(processes, burst, arrival, tableModel); // Pass tableModel
+                // sort processes, burst times, and arrival times by arrival time (ascending)
+                sortTogether(processes, burst, arrival);
+
+                String calcMethod = StartScreen.getCalcchosen().getSelectedItem().toString();
+                if (calcMethod.equals("SJN")) {
+                    Calculate.calculateSJN(processes, burst, arrival, tableModel);
+                } else if (calcMethod.equals("SRT")) {
+                    Calculate.calculateSRT(processes, burst, arrival, tableModel);
+                }
+
             } catch (NumberFormatException e) {
-                tableModel.addRow(new Object[]{"Error: Invalid input format. Please enter numbers only.", "", "", "", "", ""});
+                tableModel.addRow(new Object[]{"Error: Invalid input format. Please enter valid numbers."});
             }
         }
 
         resultframe.setVisible(true);
+    }
+
+    // sort arraylist together by smallest to biggest number
+    private static void sortTogether(ArrayList<Integer> list1, ArrayList<Integer> list2, ArrayList<Integer> list3) {
+        int n = list1.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (list1.get(j) > list1.get(j + 1)) {
+                    // swap elements in all three lists
+                    int temp = list1.get(j);
+                    list1.set(j, list1.get(j + 1));
+                    list1.set(j + 1, temp);
+
+                    temp = list2.get(j);
+                    list2.set(j, list2.get(j + 1));
+                    list2.set(j + 1, temp);
+
+                    temp = list3.get(j);
+                    list3.set(j, list3.get(j + 1));
+                    list3.set(j + 1, temp);
+                }
+            }
+        }
     }
 }
 
@@ -537,9 +576,81 @@ class Calculate {
     }
 
 
-    //Shortest Remaining Time
-    public static void calculateSRT(){
+    public static void calculateSRT(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
+        int n = processes.size();
+        int[] process = new int[n];
+        int[] bt = new int[n];
+        int[] at = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
+        int[] rt = new int[n];
 
+        for (int i = 0; i < n; i++) {
+            process[i] = processes.get(i);
+            bt[i] = burst.get(i);
+            at[i] = arrival.get(i);
+            rt[i] = bt[i];
+        }
+
+        int current = 0;
+        int completed = 0;
+        boolean idle = false; //flag
+
+        while (completed != n) {
+            int shortest = -1;
+            int minRemaining = Integer.MAX_VALUE;
+
+            for (int i = 0; i < n; i++) {
+                if (at[i] <= current && rt[i] > 0 && rt[i] < minRemaining) {
+                    minRemaining = rt[i];
+                    shortest = i;
+                }
+            }
+
+            if (shortest == -1) {
+                current++; // CPU idle, move to next time unit
+                if (idle) { // check idle
+                    throw new RuntimeException("Infinite loop detected: No more processes to execute.");
+                }
+                idle = true;
+            } else {
+                rt[shortest]--;
+                current++;
+                idle = false; // cpu busy
+
+                if (rt[shortest] == 0) {
+                    completed++;
+                    ct[shortest] = current;
+                }
+            }
+        }
+
+        // calculate TAT and WT
+        for (int i = 0; i < n; i++) {
+            tat[i] = ct[i] - at[i];
+            wt[i] = tat[i] - bt[i];
+        }
+
+        // sort by process ID for display
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (process[j] > process[j + 1]) {
+                    // swap all related values
+                    int temp = process[j]; process[j] = process[j + 1]; process[j + 1] = temp;
+                    temp = bt[j]; bt[j] = bt[j + 1]; bt[j + 1] = temp;
+                    temp = at[j]; at[j] = at[j + 1]; at[j + 1] = temp;
+                    temp = ct[j]; ct[j] = ct[j + 1]; ct[j + 1] = temp;
+                    temp = tat[j]; tat[j] = tat[j + 1]; tat[j + 1] = temp;
+                    temp = wt[j]; wt[j] = wt[j + 1]; wt[j + 1] = temp;
+                }
+            }
+        }
+
+        tableModel.setRowCount(0); // clear existing rows
+        for (int i = 0; i < n; i++) {
+            tableModel.addRow(new Object[]{process[i], bt[i], at[i], ct[i], tat[i], wt[i]});
+        }
     }
 
     //Round Robin (Q=3)
@@ -558,6 +669,8 @@ class Calculate {
     }
 
 }
+
+
 
 public class test {
     public static void main(String[] args) {
