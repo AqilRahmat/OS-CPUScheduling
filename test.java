@@ -27,51 +27,67 @@ class StartScreen {
         return processnum;
     }
 
-    //starting frame initialization
     public void start() {
-        //open the guide window
-        //this is to make sure the user knows how to use the program
-        //User can also click the guide button if they want to see it again
         GuideWindow guide = new GuideWindow();
-
         startframe = new JFrame("Start Menu");
-        startframe.setLayout(new GridLayout(4,2));
+        startframe.setLayout(new GridLayout(4, 2));
         startframe.setBounds(100, 100, 300, 200);
         startframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         startframe.setResizable(false);
         InsertUserComponent();
-
         startframe.setVisible(true);
     }
 
-    //function to insert the textfield, button and other component to get user input.
     private void InsertUserComponent() {
-        //Number of process
         JLabel processlabel = new JLabel("Number of Processes :");
         processnum = new JComboBox<>();
         processnum.setEditable(false);
-        for(int i = 3; i < 11; i++) {
-            processnum.addItem(i+"");
+        for (int i = 3; i < 11; i++) {
+            processnum.addItem(i + "");
         }
 
-        //Calculation chooser
         JLabel calclabel = new JLabel("Calculation Method :");
         calcchosen = new JComboBox<>();
         calcchosen.setEditable(false);
-        calcchosen.addItem("Round Robin (Q=3)");
         calcchosen.addItem("SRT");
         calcchosen.addItem("SJN");
+        calcchosen.addItem("Round Robin (Q=3)");
         calcchosen.addItem("Preemptive Priority");
         calcchosen.addItem("Non-Preemptive Priority");
 
-        //Priority
         JLabel prioritylabel = new JLabel("Priority :");
         priority = new JComboBox<>();
         priority.setEditable(false);
         priority.addItem("Have Priority");
         priority.addItem("No Priority");
 
-        //Guide button
+        calcchosen.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedMethod = (String) calcchosen.getSelectedItem();
+                priority.removeAllItems();
+                switch (selectedMethod) {
+                    case "Round Robin (Q=3)":
+                        priority.addItem("No Priority");
+                        priority.setSelectedIndex(0);
+                        priority.setEnabled(false);
+                        break;
+                    case "Preemptive Priority":
+                    case "Non-Preemptive Priority":
+                        priority.addItem("Have Priority");
+                        priority.setSelectedIndex(0);
+                        priority.setEnabled(false);
+                        break;
+                    default:
+                        priority.addItem("Have Priority");
+                        priority.addItem("No Priority");
+                        priority.setSelectedIndex(0);
+                        priority.setEnabled(true);
+                        break;
+                }
+            }
+        });
+
         guidebutton = new JButton("Guide");
         guidebutton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -79,7 +95,6 @@ class StartScreen {
             }
         });
 
-        //start button
         startbutton = new JButton("Start");
         startbutton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -88,21 +103,16 @@ class StartScreen {
             }
         });
 
-        //add to frame
         startframe.add(processlabel);
         startframe.add(processnum);
-
         startframe.add(calclabel);
         startframe.add(calcchosen);
-
         startframe.add(prioritylabel);
         startframe.add(priority);
-
         startframe.add(guidebutton);
         startframe.add(startbutton);
     }
 }
-
 //class for new window when start button is clicked
 class MainWindow {
     private JFrame mainframe;
@@ -389,9 +399,7 @@ class GuideWindow {
             
             2. Main Window
             - Input the numbers in this order :
-            LEFT TO RIGHT, TOP TO BOTTOM
-            that means starting from the top left process column and moving to the right,
-            going down a row when you reach priority column or the end if there is no priority
+            TOP TO BOTTOM process, TOP TO BOTTOM burst time, TOP TO BOTTOM arrival time
             
             3. Result Window
             - Click the Result Button to make this window appear
@@ -467,6 +475,9 @@ class ResultWindow {
                     Calculate.calculateSJN(processes, burst, arrival, tableModel);
                 } else if (calcMethod.equals("SRT")) {
                     Calculate.calculateSRT(processes, burst, arrival, tableModel);
+                }
+                  else if (calcMethod.equals("Round Robin (Q=3)")) {
+                    Calculate.calculateRR(processes, burst, arrival, tableModel);
                 }
 
             } catch (NumberFormatException e) {
@@ -573,6 +584,7 @@ class Calculate {
         for (int i = 0; i < n; i++) {
             tableModel.addRow(new Object[]{process[p[i]], bt[p[i]], at[p[i]], ct[p[i]], tat[p[i]], wt[p[i]]});
         }
+        System.out.println("Using calculateSJN() method");
     }
 
 
@@ -651,12 +663,62 @@ class Calculate {
         for (int i = 0; i < n; i++) {
             tableModel.addRow(new Object[]{process[i], bt[i], at[i], ct[i], tat[i], wt[i]});
         }
+        System.out.println("Using calculateSRT() method");
     }
 
     //Round Robin (Q=3)
-    public static void calculateRR(){
+    public static void calculateRR(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
+        int n = processes.size();
+        int quantum = 3; // q = 3
 
+        int[] remainingBurst = new int[n];
+        for (int i = 0; i < n; i++) {
+            remainingBurst[i] = burst.get(i);
+        }
+
+        int currentTime = 0;
+        int completedProcesses = 0;
+        int[] completionTime = new int[n];
+        int[] turnAroundTime = new int[n];
+        int[] waitingTime = new int[n];
+        int[] processOrder = new int[n];
+        for(int i = 0; i<n; i++){
+            processOrder[i] = i;
+        }
+
+        while (completedProcesses < n) {
+            boolean aProcessRan = false;
+            for (int i = 0; i < n; i++) {
+                if (arrival.get(i) <= currentTime && remainingBurst[i] > 0) {
+                    aProcessRan = true;
+                    if (remainingBurst[i] <= quantum) {
+                        currentTime += remainingBurst[i];
+                        completionTime[i] = currentTime;
+                        remainingBurst[i] = 0;
+                        completedProcesses++;
+                    } else {
+                        currentTime += quantum;
+                        remainingBurst[i] -= quantum;
+                    }
+                }
+            }
+            if (!aProcessRan) {
+                currentTime++;
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            turnAroundTime[i] = completionTime[i] - arrival.get(i);
+            waitingTime[i] = turnAroundTime[i] - burst.get(i);
+        }
+
+        tableModel.setRowCount(0);
+        for (int i = 0; i < n; i++) {
+            tableModel.addRow(new Object[]{processes.get(i), burst.get(i), arrival.get(i), completionTime[i], turnAroundTime[i], waitingTime[i]});
+        }
+        System.out.println("Using calculateRR() method");
     }
+
 
     //Preemptive priority
     public static void calculatePP(){
