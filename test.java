@@ -12,7 +12,6 @@ import java.util.ArrayList;
 //Starting screen
 class StartScreen {
     private JFrame startframe;
-    private JButton startbutton, guidebutton;
     static JComboBox<String> processnum, calcchosen, priority;
 
     public static JComboBox<String> getCalcchosen() {
@@ -34,73 +33,53 @@ class StartScreen {
         startframe.setBounds(100, 100, 300, 200);
         startframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         startframe.setResizable(false);
-        InsertUserComponent();
+        insertUserComponent();
         startframe.setVisible(true);
     }
 
-    private void InsertUserComponent() {
-        JLabel processlabel = new JLabel("Number of Processes :");
+    private void insertUserComponent() {
+        JLabel processlabel = new JLabel("Number of Processes:");
         processnum = new JComboBox<>();
-        processnum.setEditable(false);
         for (int i = 3; i < 11; i++) {
             processnum.addItem(i + "");
         }
 
-        JLabel calclabel = new JLabel("Calculation Method :");
-        calcchosen = new JComboBox<>();
-        calcchosen.setEditable(false);
-        calcchosen.addItem("SRT");
-        calcchosen.addItem("SJN");
-        calcchosen.addItem("Round Robin (Q=3)");
-        calcchosen.addItem("Preemptive Priority");
-        calcchosen.addItem("Non-Preemptive Priority");
+        JLabel calclabel = new JLabel("Calculation Method:");
+        calcchosen = new JComboBox<>(new String[]{
+                "SRT", "SJN", "Round Robin (Q=3)", "Preemptive Priority", "Non-Preemptive Priority"
+        });
 
-        JLabel prioritylabel = new JLabel("Priority :");
-        priority = new JComboBox<>();
-        priority.setEditable(false);
-        priority.addItem("Have Priority");
-        priority.addItem("No Priority");
+        JLabel prioritylabel = new JLabel("Priority:");
+        priority = new JComboBox<>(new String[]{"Have Priority", "No Priority"});
 
-        calcchosen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedMethod = (String) calcchosen.getSelectedItem();
-                priority.removeAllItems();
-                switch (selectedMethod) {
-                    case "Round Robin (Q=3)":
-                        priority.addItem("No Priority");
-                        priority.setSelectedIndex(0);
-                        priority.setEnabled(false);
-                        break;
-                    case "Preemptive Priority":
-                    case "Non-Preemptive Priority":
-                        priority.addItem("Have Priority");
-                        priority.setSelectedIndex(0);
-                        priority.setEnabled(false);
-                        break;
-                    default:
-                        priority.addItem("Have Priority");
-                        priority.addItem("No Priority");
-                        priority.setSelectedIndex(0);
-                        priority.setEnabled(true);
-                        break;
-                }
+
+        calcchosen.addActionListener(e -> {
+            String selectedMethod = (String) calcchosen.getSelectedItem();
+            priority.removeAllItems();
+            switch (selectedMethod) {
+                case "Round Robin (Q=3)":
+                    priority.addItem("No Priority");
+                    priority.setEnabled(false);
+                    break;
+                case "Preemptive Priority", "Non-Preemptive Priority":
+                    priority.addItem("Have Priority");
+                    priority.setEnabled(false);
+                    break;
+                default:
+                    priority.addItem("Have Priority");
+                    priority.addItem("No Priority");
+                    priority.setEnabled(true);
+                    break;
             }
         });
 
-        guidebutton = new JButton("Guide");
-        guidebutton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                GuideWindow guide = new GuideWindow();
-            }
-        });
+        JButton guidebutton = new JButton("Guide");
+        guidebutton.addActionListener(e -> new GuideWindow());
 
-        startbutton = new JButton("Start");
-        startbutton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                startframe.setVisible(false);
-                MainWindow main = new MainWindow();
-            }
+        JButton startbutton = new JButton("Start");
+        startbutton.addActionListener(e -> {
+            startframe.setVisible(false);
+            new MainWindow();
         });
 
         startframe.add(processlabel);
@@ -113,11 +92,14 @@ class StartScreen {
         startframe.add(startbutton);
     }
 }
+
 //class for new window when start button is clicked
 class MainWindow {
-    private JFrame mainframe;
+    private final JFrame mainframe;
     private StartScreen startscreen;
-    private JComboBox<String> processnum, calcchosen, priority;
+    private final JComboBox<String> processnum;
+    private final JComboBox<String> calcchosen;
+    private final JComboBox<String> priority;
     static ArrayList<Integer> processes, burst, arrival, priorityvalue;
 
     public static ArrayList<Integer> getProcesseslist() {
@@ -146,9 +128,9 @@ class MainWindow {
         arrival = new ArrayList<>();
         priorityvalue = new ArrayList<>();
 
-        processnum = startscreen.getProcessnum();
-        calcchosen = startscreen.getCalcchosen();
-        priority = startscreen.getPriority();
+        processnum = StartScreen.getProcessnum();
+        calcchosen = StartScreen.getCalcchosen();
+        priority = StartScreen.getPriority();
 
         int process = Integer.parseInt(processnum.getSelectedItem().toString());
         String prioritychosen = priority.getSelectedItem().toString();
@@ -367,7 +349,7 @@ class MainWindow {
 
 //Guide window to show how to use the program
 class GuideWindow {
-    private JFrame guideframe;
+    private final JFrame guideframe;
 
     public GuideWindow() {
         guideframe = new JFrame("Guide");
@@ -432,10 +414,9 @@ class GuideWindow {
 //Result window
 class ResultWindow {
 
-    private JFrame resultframe;
-    private JTable resultTable;
-    private DefaultTableModel tableModel;
-    private JTextArea ganttChartArea;
+    private final JFrame resultframe;
+    private final JTable resultTable;
+    private final DefaultTableModel tableModel;
 
     public ResultWindow() {
         resultframe = new JFrame("Result");
@@ -454,14 +435,10 @@ class ResultWindow {
         JScrollPane scrollPane = new JScrollPane(resultTable);
         resultframe.add(scrollPane, BorderLayout.CENTER);
 
-        ganttChartArea = new JTextArea();
-        ganttChartArea.setEditable(false);
-        JScrollPane ganttScrollPane = new JScrollPane(ganttChartArea);
-        resultframe.add(ganttScrollPane, BorderLayout.SOUTH);
-
         ArrayList<Integer> processes = MainWindow.getProcesseslist();
         ArrayList<Integer> burst = MainWindow.getBurstlist();
         ArrayList<Integer> arrival = MainWindow.getArrivallist();
+        ArrayList<Integer> priority = MainWindow.getPriorityvaluelist();
 
         if (processes == null || burst == null || arrival == null || processes.isEmpty() || burst.isEmpty() || arrival.isEmpty() || processes.size() != burst.size() || processes.size() != arrival.size()) {
             tableModel.addRow(new Object[]{"Error: Please enter valid input for all processes.", "", "", "", "", ""});
@@ -478,6 +455,12 @@ class ResultWindow {
                 }
                   else if (calcMethod.equals("Round Robin (Q=3)")) {
                     Calculate.calculateRR(processes, burst, arrival, tableModel);
+                }
+                  else if (calcMethod.equals("Preemptive Priority")) {
+                    Calculate.calculatePP(processes, burst, arrival, priority, tableModel);
+                }
+                  else if (calcMethod.equals("Non-Preemptive Priority")) {
+                    Calculate.calculateNPP(processes, burst, arrival, priority, tableModel);
                 }
 
             } catch (NumberFormatException e) {
@@ -524,69 +507,50 @@ class Calculate {
         int[] ct = new int[n];
         int[] tat = new int[n];
         int[] wt = new int[n];
-        int[] rt = new int[n];
-        int[] p = new int[n];
 
         for (int i = 0; i < n; i++) {
             process[i] = processes.get(i);
             bt[i] = burst.get(i);
             at[i] = arrival.get(i);
-            rt[i] = bt[i];
-            p[i] = i;
         }
 
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = 0; j < n - i - 1; j++) {
-                if (at[j] > at[j + 1]) {
-                    // swap arrival times
-                    int temp = at[j];
-                    at[j] = at[j + 1];
-                    at[j + 1] = temp;
-                    // swap burst times accordingly
-                    temp = bt[j];
-                    bt[j] = bt[j + 1];
-                    bt[j + 1] = temp;
-                    // swap process IDs accordingly
-                    temp = p[j];
-                    p[j] = p[j + 1];
-                    p[j + 1] = temp;
-                }
-            }
-        }
-        int current = 0;
-        int completed = 0;
-        while (completed != n) {
+        boolean[] isCompleted = new boolean[n]; // Tracks completed processes
+        int currentTime = 0, completed = 0;
+
+        while (completed < n) {
             int shortest = -1;
+            int minBurst = Integer.MAX_VALUE;
+
+            // Find the shortest available job
             for (int i = 0; i < n; i++) {
-                if (at[i] <= current && rt[i] > 0) {
-                    if (shortest == -1 || rt[i] < rt[shortest]) {
+                if (!isCompleted[i] && at[i] <= currentTime) {
+                    if (bt[i] < minBurst || (bt[i] == minBurst && at[i] < at[shortest])) {
+                        minBurst = bt[i];
                         shortest = i;
                     }
                 }
             }
+
             if (shortest == -1) {
-                current++;
+                currentTime++; // CPU idle
             } else {
-                current += rt[shortest];
-                ct[shortest] = current;
-                rt[shortest] = 0;
+                currentTime += bt[shortest];  // Move time forward
+                ct[shortest] = currentTime;   // Completion Time
+                tat[shortest] = ct[shortest] - at[shortest]; // Turnaround Time
+                wt[shortest] = tat[shortest] - bt[shortest]; // Waiting Time
+                isCompleted[shortest] = true;
                 completed++;
             }
+            System.out.println("Using calculateSJN() method");
         }
 
-
+        // Display results
+        tableModel.setRowCount(0);
         for (int i = 0; i < n; i++) {
-            tat[i] = ct[i] - at[i];
-            wt[i] = tat[i] - bt[i];
-        }
-
-        // add rows to the table model
-        for (int i = 0; i < n; i++) {
-            tableModel.addRow(new Object[]{process[p[i]], bt[p[i]], at[p[i]], ct[p[i]], tat[p[i]], wt[p[i]]});
+            tableModel.addRow(new Object[]{process[i], bt[i], at[i], ct[i], tat[i], wt[i]});
         }
         System.out.println("Using calculateSJN() method");
     }
-
 
     public static void calculateSRT(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
         int n = processes.size();
@@ -656,6 +620,7 @@ class Calculate {
                     temp = tat[j]; tat[j] = tat[j + 1]; tat[j + 1] = temp;
                     temp = wt[j]; wt[j] = wt[j + 1]; wt[j + 1] = temp;
                 }
+                System.out.println("Using calculateSRT() method");
             }
         }
 
@@ -721,19 +686,177 @@ class Calculate {
 
 
     //Preemptive priority
-    public static void calculatePP(){
+    public static void calculatePP(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, ArrayList<Integer> priority, DefaultTableModel tableModel) {
+        int n = processes.size();
+        int[] process = new int[n];
+        int[] bt = new int[n];
+        int[] at = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
+        int[] rt = new int[n];
+        int[] pr = new int[n];
 
+        // Copy input lists into arrays
+        for (int i = 0; i < n; i++) {
+            process[i] = processes.get(i);
+            bt[i] = burst.get(i);
+            at[i] = arrival.get(i);
+            pr[i] = priority.get(i);
+            rt[i] = bt[i];  // Remaining time initially set to burst time
+        }
+
+        int currentTime = 0, completed = 0;
+
+        while (completed < n) {
+            int highestPriority = -1;
+            int minPriority = Integer.MAX_VALUE;
+
+            // Find the highest priority process that is ready to execute
+            for (int i = 0; i < n; i++) {
+                if (at[i] <= currentTime && rt[i] > 0) {
+                    if (pr[i] < minPriority || (pr[i] == minPriority && (highestPriority == -1 || at[i] < at[highestPriority]))) {
+                        minPriority = pr[i];
+                        highestPriority = i;
+                    }
+                }
+            }
+
+            if (highestPriority == -1) {
+                // Jump to the next process arrival time instead of incrementing 1
+                int nextArrival = Integer.MAX_VALUE;
+                for (int i = 0; i < n; i++) {
+                    if (rt[i] > 0 && at[i] > currentTime) {
+                        nextArrival = Math.min(nextArrival, at[i]);
+                    }
+                }
+                currentTime = (nextArrival == Integer.MAX_VALUE) ? currentTime + 1 : nextArrival;
+            } else {
+                rt[highestPriority]--;  // Reduce remaining time for the selected process
+                currentTime++;
+
+                if (rt[highestPriority] == 0) {
+                    completed++;
+                    ct[highestPriority] = currentTime; // Store completion time
+                }
+            }
+        }
+
+        // Calculate Turnaround Time (TAT) and Waiting Time (WT)
+        for (int i = 0; i < n; i++) {
+            tat[i] = ct[i] - at[i];  // Turnaround Time = Completion Time - Arrival Time
+            wt[i] = tat[i] - bt[i];  // Waiting Time = Turnaround Time - Burst Time
+        }
+
+        // Sorting results based on process ID before displaying
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (process[j] > process[j + 1]) {
+                    // Swap all values accordingly
+                    int temp;
+
+                    temp = process[j]; process[j] = process[j + 1]; process[j + 1] = temp;
+                    temp = bt[j]; bt[j] = bt[j + 1]; bt[j + 1] = temp;
+                    temp = at[j]; at[j] = at[j + 1]; at[j + 1] = temp;
+                    temp = pr[j]; pr[j] = pr[j + 1]; pr[j + 1] = temp;
+                    temp = ct[j]; ct[j] = ct[j + 1]; ct[j + 1] = temp;
+                    temp = tat[j]; tat[j] = tat[j + 1]; tat[j + 1] = temp;
+                    temp = wt[j]; wt[j] = wt[j + 1]; wt[j + 1] = temp;
+                }
+                System.out.println("Using calculatePP() method");
+            }
+        }
+
+        // Display results in table
+        tableModel.setRowCount(0);
+        for (int i = 0; i < n; i++) {
+            tableModel.addRow(new Object[]{process[i], bt[i], at[i], pr[i], ct[i], tat[i], wt[i]});
+        }
+        System.out.println("Using calculatePP() method");
     }
 
     //Non-preemptive priority
-    public static void calculateNPP(){
+    public static void calculateNPP(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, ArrayList<Integer> priority, DefaultTableModel tableModel) {
+        int n = processes.size();
+        int[] process = new int[n];
+        int[] bt = new int[n];
+        int[] at = new int[n];
+        int[] ct = new int[n];
+        int[] tat = new int[n];
+        int[] wt = new int[n];
+        int[] pr = new int[n];
 
+        // Copy input lists into arrays
+        for (int i = 0; i < n; i++) {
+            process[i] = processes.get(i);
+            bt[i] = burst.get(i);
+            at[i] = arrival.get(i);
+            pr[i] = priority.get(i);
+        }
+
+        boolean[] isCompleted = new boolean[n]; // Tracks completed processes
+        int currentTime = 0, completed = 0;
+
+        while (completed < n) {
+            int highestPriority = -1;
+            int minPriority = Integer.MAX_VALUE;
+
+            // Find the highest priority process that has arrived and is not yet completed
+            for (int i = 0; i < n; i++) {
+                if (!isCompleted[i] && at[i] <= currentTime) {
+                    if (pr[i] < minPriority || (pr[i] == minPriority && (highestPriority == -1 || at[i] < at[highestPriority]))) {
+                        minPriority = pr[i];
+                        highestPriority = i;
+                    }
+                }
+            }
+
+            if (highestPriority == -1) {
+                // Jump to the next earliest arrival time
+                int nextArrival = Integer.MAX_VALUE;
+                for (int i = 0; i < n; i++) {
+                    if (!isCompleted[i] && at[i] > currentTime) {
+                        nextArrival = Math.min(nextArrival, at[i]);
+                    }
+                }
+                currentTime = (nextArrival == Integer.MAX_VALUE) ? currentTime + 1 : nextArrival;
+            } else {
+                currentTime += bt[highestPriority]; // Execute the selected process fully
+                ct[highestPriority] = currentTime; // Store completion time
+                tat[highestPriority] = ct[highestPriority] - at[highestPriority]; // Turnaround Time
+                wt[highestPriority] = tat[highestPriority] - bt[highestPriority]; // Waiting Time
+                isCompleted[highestPriority] = true;
+                completed++;
+            }
+        }
+
+        // Sorting results by process ID for final display
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (process[j] > process[j + 1]) {
+                    // Swap values in all arrays
+                    int temp;
+                    temp = process[j]; process[j] = process[j + 1]; process[j + 1] = temp;
+                    temp = bt[j]; bt[j] = bt[j + 1]; bt[j + 1] = temp;
+                    temp = at[j]; at[j] = at[j + 1]; at[j + 1] = temp;
+                    temp = pr[j]; pr[j] = pr[j + 1]; pr[j + 1] = temp;
+                    temp = ct[j]; ct[j] = ct[j + 1]; ct[j + 1] = temp;
+                    temp = tat[j]; tat[j] = tat[j + 1]; tat[j + 1] = temp;
+                    temp = wt[j]; wt[j] = wt[j + 1]; wt[j + 1] = temp;
+                }
+                System.out.println("Using calculateNPP() method");
+            }
+        }
+
+        // Display results in table
+        tableModel.setRowCount(0);
+        for (int i = 0; i < n; i++) {
+            tableModel.addRow(new Object[]{process[i], bt[i], at[i], pr[i], ct[i], tat[i], wt[i]});
+        }
+        System.out.println("Using calculateNPP() method");
     }
 
 }
-
-
-
 public class test {
     public static void main(String[] args) {
         new StartScreen().start();
