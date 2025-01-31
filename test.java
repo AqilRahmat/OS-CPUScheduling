@@ -596,9 +596,11 @@ class ResultWindow {
 
             if (calcMethod.equals("Round Robin (Q=3)")) {
                 drawGanttChartRR(g, getWidth(), 3);
-            } else {
+            } else if (calcMethod.equals("SJN")) {
                 drawGanttChartSJN(g, getWidth(), -1);
+            } else if (calcMethod.equals("SRT")) {
                 drawGanttChartSRT(g, getWidth(), -1);
+            } else if (calcMethod.equals("Non-Preemptive Priority")) {
                 drawGanttChartNPP(g,getWidth(), -1);// No quantum for other calculations
             }
         }
