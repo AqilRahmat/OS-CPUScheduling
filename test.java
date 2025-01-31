@@ -561,7 +561,6 @@ class ResultWindow {
                 } else if (calcMethod.equals("SRT")) {
                     Calculate.calculateSRT(processes, burst, arrival, tableModel);
                 } else if (calcMethod.equals("Round Robin (Q=3)")) {
-                    System.out.println("Round Robin");
                     Calculate.calculateRR(processes, burst, arrival, tableModel);
                 } else if (calcMethod.equals("Non-Preemptive Priority")) {
                     Calculate.calculateNPP(processes, burst, arrival, priority, tableModel);
@@ -594,10 +593,8 @@ class ResultWindow {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             String calcMethod = StartScreen.getCalcchosen().getSelectedItem().toString();
-            System.out.println(calcMethod);
 
-            if (calcMethod.equals("Round Robin")) {
-                System.out.println("Round Robin (Q=3)");
+            if (calcMethod.equals("Round Robin (Q=3)")) {
                 drawGanttChartRR(g, getWidth(), 3);
             } else if (calcMethod.equals("SJN")) {
                 drawGanttChartSJN(g, getWidth(), -1);
@@ -609,7 +606,6 @@ class ResultWindow {
         }
 
         private void drawGanttChartRR(Graphics g, int panelWidth, int quantum) {
-            System.out.println("drawGanttChartRR");
             ArrayList<Integer> processes = MainWindow.getProcesseslist();
             ArrayList<Integer> burst = MainWindow.getBurstlist();
             ArrayList<Integer> arrival = MainWindow.getArrivallist();
@@ -639,7 +635,12 @@ class ResultWindow {
             for (int i = 0; i < n; i++) sortedIndexes.add(i);
             sortedIndexes.sort(Comparator.comparing(arrival::get));
 
-            // Add first available process to the queue
+            // Ensure time starts at the first process's arrival
+            if (arrival.get(sortedIndexes.get(0)) > 0) {
+                currentTime = arrival.get(sortedIndexes.get(0));
+            }
+
+            // Add the first arriving processes
             while (index < n && arrival.get(sortedIndexes.get(index)) <= currentTime) {
                 queue.add(sortedIndexes.get(index));
                 index++;
@@ -649,19 +650,12 @@ class ResultWindow {
                 if (!queue.isEmpty()) {
                     int i = queue.poll(); // Get process
 
-                    int executionTime;
-                    if (quantum == -1) {  // For non-RR scheduling, execute full burst
-                        executionTime = remainingBurst[i];
-                    } else {  // For RR, execute within quantum
-                        executionTime = Math.min(quantum, remainingBurst[i]);
-                    }
+                    int executionTime = Math.min(quantum, remainingBurst[i]);
+                    ganttOrder.add(processes.get(i));
+                    timeStamps.add(currentTime + executionTime);
 
                     currentTime += executionTime;
                     remainingBurst[i] -= executionTime;
-
-                    // Store execution sequence for Gantt Chart
-                    ganttOrder.add(processes.get(i));
-                    timeStamps.add(currentTime);
 
                     // Check if process is completed
                     if (remainingBurst[i] == 0) {
@@ -670,24 +664,29 @@ class ResultWindow {
                         completedProcesses++;
                     }
 
-                    // Check for new arrivals and add to the queue
+                    // Add newly arrived processes to the queue
                     while (index < n && arrival.get(sortedIndexes.get(index)) <= currentTime) {
                         queue.add(sortedIndexes.get(index));
                         index++;
                     }
 
-                    // If not completed and it's RR, re-add process to queue
-                    if (quantum != -1 && !isCompleted[i]) queue.add(i);
+                    // Re-add unfinished process if Round Robin
+                    if (!isCompleted[i]) queue.add(i);
                 } else {
-                    // If no process is available, CPU remains idle
-                    currentTime++;
+                    // CPU idle: Move to the next available process arrival
+                    if (index < n) {
+                        currentTime = arrival.get(sortedIndexes.get(index));
+                        queue.add(sortedIndexes.get(index));
+                        index++;
+                    }
                 }
             }
 
+            // **Drawing Gantt Chart**
             int xStart = 20;
             int yStart = 40;
             int height = 40;
-            int unitWidth = panelWidth / (currentTime + 1);  // Adjust width dynamically
+            int unitWidth = panelWidth / (currentTime + 1);
 
             g.setFont(new Font("Arial", Font.BOLD, 12));
             g.drawString("Gantt Chart:", 10, 20);
@@ -706,6 +705,7 @@ class ResultWindow {
             }
             g.drawString(String.valueOf(time), xStart, yStart + height + 15);
         }
+
 
         private void drawGanttChartSJN(Graphics g, int panelWidth, int quantum) {
             ArrayList<Integer> processes = MainWindow.getProcesseslist();
@@ -1021,7 +1021,6 @@ class ResultWindow {
                 for (int i = 0; i < n; i++) {
                     tableModel.addRow(new Object[]{process[i], bt[i], at[i], ct[i], tat[i], wt[i]});
                 }
-                System.out.println("Using corrected calculateSJN() method");
             }
 
             public static void calculateSRT(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
@@ -1072,14 +1071,12 @@ class ResultWindow {
                 for (int i = 0; i < n; i++) {
                     tableModel.addRow(new Object[]{processes.get(i), burst.get(i), arrival.get(i), completionTime[i], turnaroundTime[i], waitingTime[i]});
                 }
-                System.out.println("Using calculateSRT() method");
             }
 
-            //Round Robin (Q=3)
+            //round robin
             public static void calculateRR(ArrayList<Integer> processes, ArrayList<Integer> burst, ArrayList<Integer> arrival, DefaultTableModel tableModel) {
-                System.out.println("Using calculateRR() method");
                 int n = processes.size();
-                int quantum = 3; // Time quantum
+                int quantum = 3;
 
                 int[] remainingBurst = new int[n];
                 int[] completionTime = new int[n];
@@ -1087,11 +1084,13 @@ class ResultWindow {
                 int[] waitingTime = new int[n];
 
                 Queue<Integer> queue = new LinkedList<>();
-                int currentTime = 0, completedProcesses = 0;
                 boolean[] isCompleted = new boolean[n];
+                int currentTime = 0, completedProcesses = 0;
 
                 // Copy burst times
-                for (int i = 0; i < n; i++) remainingBurst[i] = burst.get(i);
+                for (int i = 0; i < n; i++) {
+                    remainingBurst[i] = burst.get(i);
+                }
 
                 // Sort by Arrival Time
                 ArrayList<Integer> sortedIndexes = new ArrayList<>();
@@ -1099,6 +1098,13 @@ class ResultWindow {
                 sortedIndexes.sort(Comparator.comparing(arrival::get));
 
                 int index = 0;
+
+                // Ensure time starts at the first process's arrival
+                if (arrival.get(sortedIndexes.get(0)) > 0) {
+                    currentTime = arrival.get(sortedIndexes.get(0));
+                }
+
+                // Add the first arriving processes
                 while (index < n && arrival.get(sortedIndexes.get(index)) <= currentTime) {
                     queue.add(sortedIndexes.get(index));
                     index++;
@@ -1107,20 +1113,19 @@ class ResultWindow {
                 // Round Robin Execution
                 while (completedProcesses < n) {
                     if (!queue.isEmpty()) {
-                        int i = queue.poll(); // Get process
+                        int i = queue.poll();
 
-                        if (remainingBurst[i] > quantum) {
-                            currentTime += quantum;
-                            remainingBurst[i] -= quantum;
-                        } else {
-                            currentTime += remainingBurst[i];
+                        int executionTime = Math.min(quantum, remainingBurst[i]);
+                        currentTime += executionTime;
+                        remainingBurst[i] -= executionTime;
+
+                        if (remainingBurst[i] == 0) {
                             completionTime[i] = currentTime;
-                            remainingBurst[i] = 0;
                             isCompleted[i] = true;
                             completedProcesses++;
                         }
 
-                        // Check for newly arrived processes
+                        // Add new arrivals
                         while (index < n && arrival.get(sortedIndexes.get(index)) <= currentTime) {
                             queue.add(sortedIndexes.get(index));
                             index++;
@@ -1129,7 +1134,12 @@ class ResultWindow {
                         // Re-add unfinished process
                         if (!isCompleted[i]) queue.add(i);
                     } else {
-                        currentTime++; // Move forward if CPU is idle
+                        // CPU idle: Move to the next available process arrival
+                        if (index < n) {
+                            currentTime = arrival.get(sortedIndexes.get(index));
+                            queue.add(sortedIndexes.get(index));
+                            index++;
+                        }
                     }
                 }
 
@@ -1146,9 +1156,8 @@ class ResultWindow {
                             processes.get(i), burst.get(i), arrival.get(i), completionTime[i], turnAroundTime[i], waitingTime[i]
                     });
                 }
-
-                System.out.println("Using calculateRR() method");
             }
+
 
 
             //Non-preemptive priority
