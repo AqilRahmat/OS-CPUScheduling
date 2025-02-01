@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 //Starting screen
 class StartScreen {
@@ -181,25 +183,22 @@ class MainWindow {
                 JTextField tf = new JTextField();
                 tf.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(tf);
-                tf.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
+                tf.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
+                        // Do nothing on focus gain
+                    }
+
+                    @Override
+                    public void focusLost(FocusEvent e) {
                         try {
-                            if (!tf.getText().isEmpty()) {
-                                processes.add(Integer.parseInt(tf.getText()));
+                            if (!tf.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(tf.getText().trim());
+                                processes.add(value);  // Add only when focus is lost
                             }
                         } catch (NumberFormatException ex) {
-                            System.out.println("Invalid input: " + tf.getText());
+                            System.out.println("Invalid input for process number: " + tf.getText());
                         }
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        // Handle text removal
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        // Handle style changes
                     }
                 });
 
@@ -207,64 +206,70 @@ class MainWindow {
                 JTextField bursttime = new JTextField();
                 bursttime.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(bursttime);
-                bursttime.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
+                bursttime.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
+                    }
+
+                    @Override
+                    public void focusLost(FocusEvent e) {
                         try {
-                            burst.add(Integer.parseInt(bursttime.getText()));
+                            if (!bursttime.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(bursttime.getText().trim());
+                                burst.add(value);
+                            }
                         } catch (NumberFormatException ex) {
-                            // Handle invalid input
+                            System.out.println("Invalid input for burst time: " + bursttime.getText());
                         }
-                    }
-
-                    @Override
-                    public void removeUpdate(DocumentEvent e) {
-                        // Handle text removal
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
-                        // Handle style changes
                     }
                 });
 
-                //arrivaltime time
+                // arrival time
                 JTextField arrivaltime = new JTextField();
                 arrivaltime.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(arrivaltime);
-                arrivaltime.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
-                        arrival.add(Integer.parseInt(arrivaltime.getText()));
+                arrivaltime.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
                     }
 
                     @Override
-                    public void removeUpdate(DocumentEvent e) {
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
+                    public void focusLost(FocusEvent e) {
+                        try {
+                            if (!arrivaltime.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(arrivaltime.getText().trim());
+                                arrival.add(value);
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Invalid input for arrival time: " + arrivaltime.getText());
+                        }
                     }
                 });
 
                 //priority
-                JTextField priority = new JTextField();
-                priority.setHorizontalAlignment(JTextField.CENTER);
-                mainframe.add(priority);
-                priority.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
-                        priorityvalue.add(Integer.parseInt(priority.getText()));
+                JTextField priorityField = new JTextField();
+                priorityField.setHorizontalAlignment(JTextField.CENTER);
+                mainframe.add(priorityField);
+                priorityField.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
                     }
 
                     @Override
-                    public void removeUpdate(DocumentEvent e) {
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
+                    public void focusLost(FocusEvent e) {
+                        try {
+                            if (!priorityField.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(priorityField.getText().trim());
+                                priorityvalue.add(value);
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Invalid input for priority: " + priorityField.getText());
+                        }
                     }
                 });
             }
 
-            //calculate button
+                //calculate button
             JButton calculate = new JButton("Calculate");
             calculate.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -314,17 +319,22 @@ class MainWindow {
                 JTextField tf = new JTextField();
                 tf.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(tf);
-                tf.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
-                        processes.add(Integer.parseInt(tf.getText()));
+                tf.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
+                        // Do nothing on focus gain
                     }
 
                     @Override
-                    public void removeUpdate(DocumentEvent e) {
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
+                    public void focusLost(FocusEvent e) {
+                        try {
+                            if (!tf.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(tf.getText().trim());
+                                processes.add(value);  // Add only when focus is lost
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Invalid input for process number: " + tf.getText());
+                        }
                     }
                 });
 
@@ -332,35 +342,43 @@ class MainWindow {
                 JTextField bursttime = new JTextField();
                 bursttime.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(bursttime);
-                bursttime.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
-                        burst.add(Integer.parseInt(bursttime.getText()));
+                bursttime.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
                     }
 
                     @Override
-                    public void removeUpdate(DocumentEvent e) {
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
+                    public void focusLost(FocusEvent e) {
+                        try {
+                            if (!bursttime.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(bursttime.getText().trim());
+                                burst.add(value);
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Invalid input for burst time: " + bursttime.getText());
+                        }
                     }
                 });
 
-                //arrivaltime time
+                // arrival time
                 JTextField arrivaltime = new JTextField();
                 arrivaltime.setHorizontalAlignment(JTextField.CENTER);
                 mainframe.add(arrivaltime);
-                arrivaltime.getDocument().addDocumentListener(new DocumentListener() {
-                    public void insertUpdate(DocumentEvent e) {
-                        arrival.add(Integer.parseInt(arrivaltime.getText()));
+                arrivaltime.addFocusListener(new FocusListener() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
                     }
 
                     @Override
-                    public void removeUpdate(DocumentEvent e) {
-                    }
-
-                    @Override
-                    public void changedUpdate(DocumentEvent e) {
+                    public void focusLost(FocusEvent e) {
+                        try {
+                            if (!arrivaltime.getText().trim().isEmpty()) {
+                                int value = Integer.parseInt(arrivaltime.getText().trim());
+                                arrival.add(value);
+                            }
+                        } catch (NumberFormatException ex) {
+                            System.out.println("Invalid input for arrival time: " + arrivaltime.getText());
+                        }
                     }
                 });
             }
